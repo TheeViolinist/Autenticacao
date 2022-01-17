@@ -8,17 +8,18 @@
 
 
 
-
+#define MAX_NOME 100
+#define MAX_USUARIOS 100
 
 GtkWidget *email;   /*  Variável que irá armazenar o email do usuário digitado na interface */
 GtkWidget *label_saida;
 GtkWidget *label_entrada;
 GtkWidget *senha;      /*   Variável que irá armazenar a senha do usuário digitado na interface */
-char emailUsuario[100];     /*  Email do usuário    */
-char senhaUsuario[100];       /*  Onde será armazenado a senha do usuário */
+char emailUsuario[MAX_NOME];     /*  Email do usuário    */
+char senhaUsuario[MAX_NOME];       /*  Onde será armazenado a senha do usuário */
+FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
 
-#define MAX_NOME 100
-#define MAX_USUARIOS 100
+
 
 
 /*  Struct responsável por armazenar os dados do usuário    */
@@ -31,17 +32,6 @@ typedef struct
 
 }tConta;
 
-
-
-
-gboolean ArmazenaInformacoes(GtkButton *button, gpointer data)
-{
-
-    /*  Estamos pegando o email e a senha digitada na interface e armazenando em duas variáveis globais */
-    strcpy(emailUsuario, gtk_entry_get_text(GTK_ENTRY(email)));
-    strcpy(senhaUsuario, gtk_entry_get_text(GTK_ENTRY(senha)));
-    return FALSE;
-}
 
 /****
  * RetiraQuebra(): Função responsável por retirar a quebra de linha de todas as strings digitadas pelo usuário  
@@ -62,6 +52,43 @@ void RetiraQuebra(char *str)
         str[strlen(str) - 1] = '\0';
     }
 }
+
+
+gboolean ArmazenaInformacoes(GtkButton *button, gpointer data)
+{
+
+    /*  Estamos pegando o email e a senha digitada na interface e armazenando em duas variáveis globais */
+    strcpy(emailUsuario, gtk_entry_get_text(GTK_ENTRY(email)));
+    strcpy(senhaUsuario, gtk_entry_get_text(GTK_ENTRY(senha)));
+    return FALSE;
+}
+
+
+gboolean ProcuraInformacao(GtkButton *button, gpointer data)
+{
+    char bufferEmail[MAX_NOME];
+    char bufferSenha[MAX_NOME];
+
+    rewind(fpUsuarios);
+    while(1)
+    {
+        fgets(bufferEmail, MAX_NOME, fpUsuarios);
+        RetiraQuebra(bufferEmail);
+        fgets(bufferSenha, MAX_NOME, fpUsuarios);
+        RetiraQuebra(bufferSenha);
+        if(strcmp(bufferEmail, emailUsuario) == 0 && strcmp(bufferSenha, senhaUsuario) == 0)
+        {
+            printf("As informacoes estao corretas.\n");
+            
+        }
+        break;
+        
+
+    }
+    return FALSE;
+}
+
+
 
 /****
  * CriarConta(): Função responsável pela criação de conta do usuário
@@ -147,7 +174,7 @@ int main(int argc, char **argv)
 {
     tConta usuarios[MAX_USUARIOS];      /*  Quantidade de usuários do tipo estruturado criado   */
 
-    FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
+    
 
     fpUsuarios = fopen("usuarios.txt", "r+");    /*  Abertura para leitura do arquivo    */
     if(fpUsuarios == NULL)
@@ -236,20 +263,22 @@ int main(int argc, char **argv)
 
     /*  Estamos conectado o objeto botão a ação de ser ciclicado, quando isso acontecer chamamos a função de armazenamento  */
     g_signal_connect(G_OBJECT(botaoConectar), "clicked", G_CALLBACK(ArmazenaInformacoes), NULL);
-    
-    
 
+    /*  Chamada da função para verificar se existe o login e a senha digitadas  */
+    g_signal_connect(G_OBJECT(botaoConectar), "clicked", G_CALLBACK(ProcuraInformacao), NULL );
     g_signal_connect(G_OBJECT(botaoSair), "clicked", G_CALLBACK(gtk_main_quit), NULL);
     gtk_widget_show_all(janela); /* Comando para mostrar a janela   */
 
     gtk_main(); /*  Função onde ocorrerá o main loop, loop de eventos, onde será armazenado todas as interações com a janela    */
+
+    printf("%s", emailUsuario);
     
 
 
 
 
    
-    printf("%s\n", emailUsuario);
+    
     /*
     CriarConta(&usuarios[n]);
     PrimeiraAutenticao(&usuarios[n]);
