@@ -11,16 +11,6 @@
 #define MAX_NOME 100
 #define MAX_USUARIOS 100
 
-GtkWidget *email;   /*  Variável que irá armazenar o email do usuário digitado na interface */
-GtkWidget *label_saida;
-GtkWidget *label_entrada;
-GtkWidget *senha;      /*   Variável que irá armazenar a senha do usuário digitado na interface */
-char emailUsuario[MAX_NOME];     /*  Email do usuário    */
-char senhaUsuario[MAX_NOME];       /*  Onde será armazenado a senha do usuário */
-FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
-
-
-
 
 /*  Struct responsável por armazenar os dados do usuário    */
 typedef struct
@@ -31,6 +21,23 @@ typedef struct
     int codigo;                 /*  Código do usuário   */
 
 }tConta;
+
+GtkWidget *email;   /*  Variável que irá armazenar o email do usuário digitado na interface */
+GtkWidget *label_saida;
+GtkWidget *label_entrada;
+GtkWidget *senha;   /*   Variável que irá armazenar a senha do usuário digitado na interface */
+GtkWidget *conteudo;
+GtkWidget *janela;  /*  Todos os componentes, como botões e janela são da classe GtkWidget  */
+GtkWidget *label_entrada_senha;
+GtkWidget *label_entrada_email;
+char emailUsuario[MAX_NOME];     /*  Email do usuário    */
+char senhaUsuario[MAX_NOME];       /*  Onde será armazenado a senha do usuário */
+tConta usuarios[MAX_USUARIOS];      /*  Quantidade de usuários do tipo estruturado criado   */
+int n = 0;  /*  Codigo do proximo usuario que será cadastrado   */
+
+
+
+
 
 
 /****
@@ -54,6 +61,15 @@ void RetiraQuebra(char *str)
 }
 
 
+
+/***
+ * ArmazenaInformacoes(): Função responsável por armazenar informações digitadas na interface de usuário
+ * 
+ * 
+ * Observação:
+ *                          Função copia as informações digitadas na interface e passa para duas variáveis
+ ****/
+
 gboolean ArmazenaInformacoes(GtkButton *button, gpointer data)
 {
 
@@ -63,33 +79,69 @@ gboolean ArmazenaInformacoes(GtkButton *button, gpointer data)
     return FALSE;
 }
 
-
+/***
+ * ProcuraInformacao(): Função responsável por verificar se as informações digitadas estão corretas
+ * 
+ * 
+ ****/
 gboolean ProcuraInformacao(GtkButton *button, gpointer data)
 {
-    char bufferEmail[MAX_NOME];
-    char bufferSenha[MAX_NOME];
+    
+    /*  Variável responsável por percorrer o array  */
+    int contador = 0;
 
-    rewind(fpUsuarios);
+    char texto[MAX_NOME];
     while(1)
     {
-        fgets(bufferEmail, MAX_NOME, fpUsuarios);
-        RetiraQuebra(bufferEmail);
-        fgets(bufferSenha, MAX_NOME, fpUsuarios);
-        RetiraQuebra(bufferSenha);
-        if(strcmp(bufferEmail, emailUsuario) == 0 && strcmp(bufferSenha, senhaUsuario) == 0)
+        /*  Estamos percorrendo o array até encontrar as informações dada pelo usuário  */
+        if(strcmp(usuarios[contador].nome, emailUsuario) == 0 && strcmp(usuarios[contador].senhaUsu, senhaUsuario) == 0)
         {
-            printf("As informacoes estao corretas.\n");
-            
+            /*  Se encontrado, avisamos que deu tudo certo e fechamos a função  */
+            sprintf(texto, "As informacoes foram digitadas corretamente.\n");
+            gtk_label_set_text(GTK_LABEL(label_saida), texto);
+            return FALSE;
         }
-        break;
-        
-
+        /*  Se não for encontrado, ou seja, chegamos no limite do arquivo que é igual ao valor de n, logo fechamos o loop */
+        if(contador == n)
+        {
+            break;
+        }
+        contador++;
     }
+
+    /*  Digitamos que as informações digitadas foram erradas    */ 
+    sprintf(texto, "As informacoes nao foram digitadas corretamente.\n");
+    gtk_label_set_text(GTK_LABEL(label_saida), texto);
     return FALSE;
+
+    
 }
 
+gboolean CadastraInformacao(GtkButton *button, gpointer data)
+{
+    gtk_container_remove(GTK_CONTAINER(janela), conteudo);
+    GtkWidget *cadastro;
+    
+    cadastro = gtk_box_new(TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(janela), cadastro);
+
+    label_entrada_email = gtk_label_new("Digite seu email: ");
+    gtk_box_pack_start(GTK_BOX(cadastro), label_entrada_email,  FALSE, FALSE, 0);
+
+    /*  Cria uma nova entrada*/
+    email = gtk_entry_new();
+    /*  Adicionando a entrada ao conteúdo   */
+    gtk_box_pack_start(GTK_BOX(cadastro), email, FALSE, FALSE, 0);
+
+    label_entrada_senha = gtk_label_new("Digite sua senha: ");
+    gtk_box_pack_start(GTK_BOX(cadastro), label_entrada_senha, FALSE, FALSE,0);
+
+    senha = gtk_entry_new();
+    gtk_box_pack_start(GTK_BOX(cadastro), senha,  FALSE, FALSE, 0);
+    return FALSE;
 
 
+}
 /****
  * CriarConta(): Função responsável pela criação de conta do usuário
  * 
@@ -172,8 +224,8 @@ void AnexaDados(tConta *ptrUsuarios, FILE *fpUsuario)
 
 int main(int argc, char **argv)
 {
-    tConta usuarios[MAX_USUARIOS];      /*  Quantidade de usuários do tipo estruturado criado   */
 
+    FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
     
 
     fpUsuarios = fopen("usuarios.txt", "r+");    /*  Abertura para leitura do arquivo    */
@@ -183,33 +235,39 @@ int main(int argc, char **argv)
         return 1;
     }
     
-    int n = 0;  /*  Codigo do proximo usuario que será cadastrado   */
+    
 
-
-    /*  Função responsável pela leitura dos dados e retornar o valor de n   */
+    /*  Estamos fazendo a leitura de um arquivo e armazenando cada informação de usuário em um array    */
     while(1)
     {
+
+        /*  Aqui pegamos o seu email/nome   */
         fgets(usuarios[n].nome, MAX_NOME, fpUsuarios);
+        RetiraQuebra(usuarios[n].nome);
+        /*  Aqui pegamos a senha do usuário */
         fgets(usuarios[n].senhaUsu, MAX_NOME, fpUsuarios);
+        RetiraQuebra(usuarios[n].senhaUsu);
+        /*  Pegamos a primeira autenticacao */
         fscanf(fpUsuarios, "%d%*c", &usuarios[n].autenticacao1);
+        /*  E por fim pegamos o código de usuário   */
         fscanf(fpUsuarios, "%d%*c", &usuarios[n].codigo);
         if(feof(fpUsuarios))
         {
             break;
         }
-
+        /*  Soma do codigo, para poder cadastrar um novo usuário    */
         n++;
     }
     /*  Retorna o próximo código de usuário que será cadastrado */
     usuarios[n].codigo = n;
    
 
-    GtkWidget *janela;  /*  Todos os componentes, como botões e janela são da classe GtkWidget  */
-    GtkWidget *conteudo;
-    GtkWidget *label_entrada_senha;
-    GtkWidget *label_entrada_email;
+   
+    
+   
     GtkWidget *botaoConectar;
     GtkWidget *botaoSair;
+    GtkWidget *botaoCadastrar;
     gtk_init(&argc, &argv); /*  Inicialização da biblioteca */
 
     janela=gtk_window_new(GTK_WINDOW_TOPLEVEL); /*  Anteriormente foi declarado um ponteiro do tipo gtkWidget   */
@@ -254,6 +312,15 @@ int main(int argc, char **argv)
     /*  Adicionandoo o botão ao conteúdo    */
     gtk_box_pack_start(GTK_BOX(conteudo), botaoConectar, FALSE, FALSE, 0);
 
+    
+
+
+    /*  Criação do botão de cadastro    */
+    botaoCadastrar = gtk_button_new_with_label("Cadastrar");
+    gtk_box_pack_start(GTK_BOX(conteudo), botaoCadastrar, FALSE, FALSE, 0);
+
+
+
     /* Botao de fechar o programa   */
     botaoSair = gtk_button_new_with_label("Sair");
 
@@ -261,17 +328,31 @@ int main(int argc, char **argv)
     gtk_box_pack_start(GTK_BOX(conteudo), botaoSair, FALSE, FALSE, 0);
 
 
+    /*  label onde será escrito todas as informações de saida   */
+    label_saida = gtk_label_new(" ");
+    gtk_box_pack_start(GTK_BOX(conteudo), label_saida, FALSE, FALSE, 0);
+
     /*  Estamos conectado o objeto botão a ação de ser ciclicado, quando isso acontecer chamamos a função de armazenamento  */
     g_signal_connect(G_OBJECT(botaoConectar), "clicked", G_CALLBACK(ArmazenaInformacoes), NULL);
 
     /*  Chamada da função para verificar se existe o login e a senha digitadas  */
     g_signal_connect(G_OBJECT(botaoConectar), "clicked", G_CALLBACK(ProcuraInformacao), NULL );
+
+    /*  Chamada da função de cadastro   */
+    g_signal_connect(G_OBJECT(botaoCadastrar), "clicked", G_CALLBACK(CadastraInformacao), NULL);
+    /*  Conecta-se o botão de sair com o cancelamento do programa   */
     g_signal_connect(G_OBJECT(botaoSair), "clicked", G_CALLBACK(gtk_main_quit), NULL);
+    
+    
+    
+    
+    
     gtk_widget_show_all(janela); /* Comando para mostrar a janela   */
+
 
     gtk_main(); /*  Função onde ocorrerá o main loop, loop de eventos, onde será armazenado todas as interações com a janela    */
 
-    printf("%s", emailUsuario);
+   
     
 
 
