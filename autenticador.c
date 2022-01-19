@@ -23,7 +23,7 @@ typedef struct
 }tConta;
 
 GtkWidget *email;   /*  Variável que irá armazenar o email do usuário digitado na interface */
-GtkWidget *label_saida;
+GtkWidget *label_saida; /*  Variável de comunicação com o usuário   */
 GtkWidget *label_saida2;
 GtkWidget *label_saida3;
 GtkWidget *label_saida4;
@@ -33,14 +33,14 @@ GtkWidget *autenticador;
 GtkWidget *senha;   /*   Variável que irá armazenar a senha do usuário digitado na interface */
 GtkWidget *conteudo;
 GtkWidget *janela;  /*  Todos os componentes, como botões e janela são da classe GtkWidget  */
-GtkWidget *label_entrada_senha;
-GtkWidget *label_entrada_email;
+GtkWidget *label_entrada_senha; /*  Label onde será escrito o senha */
+GtkWidget *label_entrada_email; /*  Label onde será escrito o email */
 char emailUsuario[MAX_NOME];     /*  Email do usuário    */
 char senhaUsuario[MAX_NOME];       /*  Onde será armazenado a senha do usuário */
 tConta usuarios[MAX_USUARIOS];      /*  Quantidade de usuários do tipo estruturado criado   */
 FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
 int n = 0;  /*  Codigo do proximo usuario que será cadastrado   */
-int codigo = 0;
+int codigo = 0; /*  Codigo do usuário que acessou o programa, utilizado para verificar a autenticação   */
 
 
 
@@ -203,11 +203,21 @@ void PrimeiraAutenticao(tConta *ptrUsuarios)
 
 }
 
+/****
+ * CadastraInformacao(): Função responsável por cadastrar informações do usuário
+ * 
+ * 
+ * observação: Função responsável apenas como auxiliar para a comunicação com o usuário e chamar outras funções
+ * 
+ ****/
 gboolean CadastraInformacao(GtkButton *button, gpointer data)
 {
     char texto[MAX_NOME], texto2[MAX_NOME];
+    /*  Chama a função para criar a conta   */
     CriarConta(&usuarios[n]);
+    /*  Cria a primeira autenticação do usuário */
     PrimeiraAutenticao(&usuarios[n]);
+    /*  Anexa os dados do usuário   */
     AnexaDados(&usuarios[n]);
     /*  Estamos falando ao usuário tudo que ele precisa saber para conseguir se logar no programa   */
     sprintf(texto, "Conta criada com sucesso, por favor, clique no botao de sair e abra novamente o programa\n");
@@ -219,21 +229,28 @@ gboolean CadastraInformacao(GtkButton *button, gpointer data)
 
 }
 
-
+/****
+ * Autenticar(): Função responsável por fazer a autenticação do usuário
+ * 
+ * 
+ ****/
 gboolean Autenticar(GtkButton *button, gpointer data)
 {
     char texto[MAX_NOME], texto2[MAX_NOME];
     double autenticador1;
+    /*  Transforma a entrada num valor double   */
     autenticador1 = atol(gtk_entry_get_text(GTK_ENTRY(autenticador)));
   
-   
+    /*  Caso sejam iguais, a divisão será igual a 1.0   */
     if(autenticador1 / usuarios[codigo].autenticacao1 == 1.0)
     {
+        /*  Se for igual, diga ao usuário bem vindo */
         sprintf(texto, "Bem vindo");
         gtk_label_set_text(GTK_LABEL(label_saida3), texto);
         
     }
     
+    /*  Se não for igual, avise ao usuário  */
     sprintf(texto2, "voce digitou errado, tente novamente.");
     gtk_label_set_text(GTK_LABEL(label_saida4), texto2);
     return FALSE;
@@ -243,8 +260,6 @@ int main(int argc, char **argv)
 {
 
    
-    
-
     fpUsuarios = fopen("usuarios.txt", "r+");    /*  Abertura para leitura do arquivo    */
     if(fpUsuarios == NULL)
     {
@@ -281,7 +296,7 @@ int main(int argc, char **argv)
 
    
     
-   
+    /*  Criação de todos os botões utilizado    */
     GtkWidget *botaoConectar;
     GtkWidget *botaoSair;
     GtkWidget *botaoCadastrar;
@@ -353,12 +368,13 @@ int main(int argc, char **argv)
     label_saida2 = gtk_label_new(" ");
     gtk_box_pack_start(GTK_BOX(conteudo),label_saida2, FALSE, FALSE, 0);
 
+    /*  Label de entrada da autenticação do usuário */
     label_entrada_autenticador = gtk_label_new("Digite sua autenticacao: ");
     gtk_box_pack_start(GTK_BOX(conteudo), label_entrada_autenticador, FALSE, FALSE, 0);
     autenticador = gtk_entry_new();
     gtk_box_pack_start(GTK_BOX(conteudo), autenticador, FALSE, FALSE,0);
 
-
+    /*botao de tentar se autenticar */
     botaoAutenticar = gtk_button_new_with_label("Autenticar");
     gtk_box_pack_start(GTK_BOX(conteudo), botaoAutenticar, FALSE, FALSE, 0);
 
