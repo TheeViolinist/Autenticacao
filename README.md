@@ -6,7 +6,7 @@
 
 <p> O projeto foi criado como prática para a biblioteca GTK+, todo o seu desenvolvimento se encontra nesse repositório. <p>
 
-<p> Esse trabalho se baseia nos autenticadores mais simples, no qual possui uma interface em que você pode se logar e cadastrar e posteriormente tentar entrar com sua autenticação. <p>
+<p> Esse trabalho se baseia nos autenticadores mais simples, no qual possui uma interface em que você pode se logar, cadastrar e posteriormente tentar entrar com sua autenticação. <p>
 
 ## Design
 <p><div align = "center" >
