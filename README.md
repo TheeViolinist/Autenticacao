@@ -8,6 +8,11 @@
 
 <p> Esse trabalho se baseia nos autenticadores mais simples, no qual possui uma interface em que você pode se logar e cadastrar e posteriormente tentar entrar com sua autenticação. <p>
 
+## Design
+<p><div align = "center" >
+<img src =  "https://github.com/TheeViolinist/Autenticacao/blob/main/src/assets/to_readme/programa.png" height = "350px" width = "200px">
+</div><p>
+
 ## Programas utilizados
 * Visual Stdio Code
 
