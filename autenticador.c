@@ -33,8 +33,8 @@ GtkWidget *label_entrada_email;
 char emailUsuario[MAX_NOME];     /*  Email do usuário    */
 char senhaUsuario[MAX_NOME];       /*  Onde será armazenado a senha do usuário */
 tConta usuarios[MAX_USUARIOS];      /*  Quantidade de usuários do tipo estruturado criado   */
+FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
 int n = 0;  /*  Codigo do proximo usuario que será cadastrado   */
-
 
 
 
@@ -89,7 +89,6 @@ gboolean ProcuraInformacao(GtkButton *button, gpointer data)
     
     /*  Variável responsável por percorrer o array  */
     int contador = 0;
-
     char texto[MAX_NOME];
     while(1)
     {
@@ -117,31 +116,7 @@ gboolean ProcuraInformacao(GtkButton *button, gpointer data)
     
 }
 
-gboolean CadastraInformacao(GtkButton *button, gpointer data)
-{
-    gtk_container_remove(GTK_CONTAINER(janela), conteudo);
-    GtkWidget *cadastro;
-    
-    cadastro = gtk_box_new(TRUE, 0);
-    gtk_container_add(GTK_CONTAINER(janela), cadastro);
 
-    label_entrada_email = gtk_label_new("Digite seu email: ");
-    gtk_box_pack_start(GTK_BOX(cadastro), label_entrada_email,  FALSE, FALSE, 0);
-
-    /*  Cria uma nova entrada*/
-    email = gtk_entry_new();
-    /*  Adicionando a entrada ao conteúdo   */
-    gtk_box_pack_start(GTK_BOX(cadastro), email, FALSE, FALSE, 0);
-
-    label_entrada_senha = gtk_label_new("Digite sua senha: ");
-    gtk_box_pack_start(GTK_BOX(cadastro), label_entrada_senha, FALSE, FALSE,0);
-
-    senha = gtk_entry_new();
-    gtk_box_pack_start(GTK_BOX(cadastro), senha,  FALSE, FALSE, 0);
-    return FALSE;
-
-
-}
 /****
  * CriarConta(): Função responsável pela criação de conta do usuário
  * 
@@ -174,12 +149,14 @@ void CriarConta(tConta *ptrUsuarios)
         {
             /*  Se forem, vamos colocá-la como senha do usuário */
             strcpy(ptrUsuarios->senhaUsu, senha2);
+            cadastrou = 1;
             break;
 
         }
         /*  Caso não seja, o loop será infinito até que o usuário digite uma senha correta  */
         else
         {
+        
             printf("\n senha digitada errada\n");
             printf("\n");
         }
@@ -189,7 +166,15 @@ void CriarConta(tConta *ptrUsuarios)
 
 }
 
+/*  Função para anexar os dados da criação da conta */
+void AnexaDados(tConta *ptrUsuarios)
+{
 
+    
+    fprintf(fpUsuarios,"%s\n%s\n%d\n%d\n", ptrUsuarios->nome, ptrUsuarios->senhaUsu, ptrUsuarios->autenticacao1, ptrUsuarios->codigo);
+    
+
+}
 /****
  * PrimeiraAutenticacao(): Primeira autenticação do usuário 
  * 
@@ -211,21 +196,27 @@ void PrimeiraAutenticao(tConta *ptrUsuarios)
     ptrUsuarios->autenticacao1 = rand() % 1000 + 1000;
 
 }
-/*  Função para anexar os dados da criação da conta */
-void AnexaDados(tConta *ptrUsuarios, FILE *fpUsuario)
+
+gboolean CadastraInformacao(GtkButton *button, gpointer data)
 {
+    char texto[MAX_NOME];
+    CriarConta(&usuarios[n]);
+    PrimeiraAutenticao(&usuarios[n]);
+    AnexaDados(&usuarios[n]);
+    sprintf(texto, "Conta criada com sucesso, por favor, clique no botao de sair e abra novamente o programa");
+    gtk_label_set_text(GTK_LABEL(label_saida), texto);
+    return FALSE;
 
-
-    fprintf(fpUsuario,"%s\n%s\n%d\n%d\n", ptrUsuarios->nome, ptrUsuarios->senhaUsu, ptrUsuarios->autenticacao1, ptrUsuarios->codigo);
-    
 
 }
+
+
 
 
 int main(int argc, char **argv)
 {
 
-    FILE *fpUsuarios = NULL;            /*  Criação de um stream para um arquivo onde estão os dados dos usuários   */
+   
     
 
     fpUsuarios = fopen("usuarios.txt", "r+");    /*  Abertura para leitura do arquivo    */
@@ -345,14 +336,16 @@ int main(int argc, char **argv)
     
     
     
-    
-    
+
+
     gtk_widget_show_all(janela); /* Comando para mostrar a janela   */
 
 
     gtk_main(); /*  Função onde ocorrerá o main loop, loop de eventos, onde será armazenado todas as interações com a janela    */
 
-   
+    
+
+    
     
 
 
@@ -360,11 +353,7 @@ int main(int argc, char **argv)
 
    
     
-    /*
-    CriarConta(&usuarios[n]);
-    PrimeiraAutenticao(&usuarios[n]);
-    AnexaDados(&usuarios[n], fpUsuarios);
-    */
+
    
             
 
